@@ -23,7 +23,10 @@
  */
 package com.mana.compiler;
 
+import com.mana.compiler.assembly.Assembler;
+import com.mana.compiler.generator.IntermediateGeneration;
 import com.mana.compiler.parser.Parser;
+import com.mana.compiler.parser.SemanticAnalyzer;
 import com.mana.compiler.util.handler.FlagHandler;
 import com.mana.compiler.util.structures.ParseTree;
 import java.util.ArrayList;
@@ -79,5 +82,11 @@ class Main {
         });
         
         List<Future<ParseTree>> returns = factory.invokeAll(tasks);
+        IntermediateGeneration generation = SemanticAnalyzer.check(returns);
+        
+        // send data to be compiled by the Assembler.
+        Assembler.assemble(generation);
+        
+        // from here the compiler should therefore be finished!
     }
 }
