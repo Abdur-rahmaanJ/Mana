@@ -53,7 +53,13 @@ public class SourceReader implements AutoCloseable {
      */
     private static final short BUFFER_SIZE = 0x7fff;
     /** Tells if this reader has reached the end of the file. */
-    private boolean eof;
+    boolean eof;
+    /** Tells if this reader has reached the end of a line. */
+    boolean eol;
+    /** The current line in the file. */
+    int line = 0;
+    /** The current column in the line. */
+    int column = -1;
     /** Our input stream to read from. */
     private final FileInputStream fisin;
     /** The channel used to maneuver around the file. */
@@ -83,6 +89,7 @@ public class SourceReader implements AutoCloseable {
      */
     byte read() throws IOException {
         bytesRead++;
+        column++;
         return (byte)fisin.read();
     }
     
@@ -94,6 +101,10 @@ public class SourceReader implements AutoCloseable {
      */
     public String next() throws IOException {
         byte input;
+        
+        // make sure to set this to false if it happened to be true last read
+        // cycle.
+        eol = false;
         
         while (true) {
             // add the next peice of input into our buffer.
@@ -131,9 +142,7 @@ public class SourceReader implements AutoCloseable {
             }
             
             if (space(input) || input == -1) {
-                // seek back one position to get the invalid character out of our
-                // buffer.
-                seek(-1);
+                // remove that character from the buffer.
                 buffer[pointer--] = 0;
                 
                 if (input == -1) eof = true;
@@ -168,6 +177,9 @@ public class SourceReader implements AutoCloseable {
             case ' ':
             case '\t':
             case '\n':
+                eol = true;
+                line++;
+                column = 0;
             case '\r':
                 isSpace = true;
         }
